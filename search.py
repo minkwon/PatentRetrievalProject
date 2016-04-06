@@ -71,7 +71,7 @@ def search_query(dictionary, postings_reader, raw_query):
     query_length = pow(temp, 1/2)
 
     # calculating cosine angle between two vectors
-    for term, tf_idf_w in query_weighted_tf_idf_table.iteritems():
+    for term, tf_idf_w in query_weighted_tf_idf_table.iteritems():/
         postings = load_postings_by_term(term, dictionary, postings_reader)
         for doc_id, d_tf_w in postings:
             if doc_id in score:
@@ -89,7 +89,7 @@ def main(dictionary_file, postings_file, query_file, output_file):
     dictionary = pickle.load(open(dictionary_file, "rb"))
     postings_reader = open(postings_file, "rb")
     output = open(output_file, "w")
-    query = open(query_file, "r").readlines()
+    query = open(query_file, "r").readlines() # TODO change
     result = search_query(dictionary, postings_reader, query)
     output.write(result)
     output.write('\n')

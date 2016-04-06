@@ -6,6 +6,14 @@ Place your comments or requests here for Min to read.  Discuss your
 architecture or experiments in general.  A paragraph or two is usually
 sufficient.
 
+Feature:
+
+<T,q> -> <T,d> gives higher score than <T,q> -> <A,d>
+
+<A,q> -> <T,d> ??? <A,q> -> <A,d>
+
+
+
 == Files included with this submission ==
 
 List the files in your submission here and provide a short 1 line
@@ -32,10 +40,3 @@ I suggest that I should be graded as follows:
 As fairly as anybody in the class who have put in the work individually with honesty.
 
 == References ==
-
-Below resource was used as a guideline in python code documentation:
-
-https://csse1001.uqcloud.net/notes/commenting
-
-It is a web page for the course content of CSSE1001 offered at University of Queensland,
-which I have taken in 2014.

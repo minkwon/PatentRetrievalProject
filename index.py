@@ -3,6 +3,7 @@ import getopt
 import nltk
 import os
 import math
+import xml.etree
 import cPickle as pickle
 
 """
@@ -60,6 +61,8 @@ def index_documents(directory_file, dictionary_file, postings_file):
     # list of all doc ids, to help unary NOT operation in search
     doc_id_list = []
 
+    # TODO CHANGE TO RETRIEVE XML
+
     # tokenizing
     for doc_id in sorted(os.listdir(directory_file), key=numerical):
         for sentence in nltk.sent_tokenize(open(directory_file + doc_id, "r").read()):
@@ -70,6 +73,8 @@ def index_documents(directory_file, dictionary_file, postings_file):
     # sorting the index by terms while maintaining the doc id order
     list_index.sort(key=lambda pair: pair[0])
 
+################################################
+    # TODO MAKE TERM TO (TERM, NUM)
     # constructing each postings list [(doc_id, term_frequency), ...]
     # and storing in hash table where the term is the key
     for term, doc_id in list_index:
@@ -81,7 +86,8 @@ def index_documents(directory_file, dictionary_file, postings_file):
         else:
             hash_index[term] = [[doc_id, 1]]
 
-    # converting term frequency to weighted term frequency
+    # converting term frequency to
+    #  weighted term frequency
     for term, postings_list in hash_index.iteritems():
         for i, value in enumerate(postings_list):
             # [doc_id, tf] -> (doc_id, tf_weighted)
