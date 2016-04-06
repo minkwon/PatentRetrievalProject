@@ -51,7 +51,6 @@ search(dict<str:int>, file, str) -> str
 def search_query(dictionary, postings_reader, raw_query):
     if raw_query == '\n':
         return ''
-    top_ten = []
     score = {}
     query_weighted_tf_idf_table = {}
     doc_length_table = load_postings_by_term("DOC LENGTH TABLE", dictionary, postings_reader)
@@ -80,26 +79,20 @@ def search_query(dictionary, postings_reader, raw_query):
             else:
                 score[doc_id] = d_tf_w * tf_idf_w / (query_length * doc_length_table[doc_id])
 
-    # sorting by score in descending order and returning the top 10 result
+    # sorting by score from most to the least
     result = score.items()
     result.sort(key=lambda docId_score_pair: docId_score_pair[1], reverse=True)
-    count = 0
-    for doc_id, score in result:
-        top_ten.append(doc_id)
-        count += 1
-        if count == 10:
-            break
-    return str(top_ten).strip('[]').replace(',', '')
+    # TODO: MUST RETURN NULL IF NO PATENTS ARE RELEVANT
+    return str(result).strip('[]').replace(',', '')
 
 def main(dictionary_file, postings_file, query_file, output_file):
     dictionary = pickle.load(open(dictionary_file, "rb"))
     postings_reader = open(postings_file, "rb")
     output = open(output_file, "w")
-    queries = open(query_file, "r").readlines()
-    for query in queries:
-        result = search_query(dictionary, postings_reader, query)
-        output.write(result)
-        output.write('\n')
+    query = open(query_file, "r").readlines()
+    result = search_query(dictionary, postings_reader, query)
+    output.write(result)
+    output.write('\n')
 
 def usage():
     print "usage: python search.py -d dictionary-file -p postings-file -q query-file -o output-file-of-results"

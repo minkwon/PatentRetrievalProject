@@ -1,0 +1,2 @@
+This directory will contain temporary web pages that will be retrieved before the query processing,
+to increase the speed.
