@@ -12,6 +12,9 @@ Feature:
 
 <A,q> -> <T,d> ??? <A,q> -> <A,d>
 
+document's enumumerated id is indexed instead of its actual doc id to
+be compatible with the implementations in search.py
+
 
 
 == Files included with this submission ==
