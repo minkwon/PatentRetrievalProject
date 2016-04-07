@@ -61,7 +61,7 @@ def search_query(dictionary, postings_reader, raw_query):
         # only calculating score if term is indexed
         if term in dictionary:
             tf_w = 1 + math.log(q_frequency, 10)
-            idf = math.log(len(query_tokens) / (dictionary[term][0] * 1.0), 10)
+            idf = math.log(len(doc_length_table) / (dictionary[term][0] * 1.0), 10)
             query_weighted_tf_idf_table[term] = tf_w * idf
 
     # calculating query length
@@ -71,7 +71,7 @@ def search_query(dictionary, postings_reader, raw_query):
     query_length = pow(temp, 1/2)
 
     # calculating cosine angle between two vectors
-    for term, tf_idf_w in query_weighted_tf_idf_table.iteritems():/
+    for term, tf_idf_w in query_weighted_tf_idf_table.iteritems():
         postings = load_postings_by_term(term, dictionary, postings_reader)
         for doc_id, d_tf_w in postings:
             if doc_id in score:
