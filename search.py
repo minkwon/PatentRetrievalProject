@@ -6,6 +6,8 @@ import xml.etree.ElementTree as ET
 import cPickle as pickle
 
 QUERY_DESCRIPTION_PREFIX = "Relevant documents will describe"
+ZONE_WEIGHT_SAME = 0.8
+ZONE_WEIGHT_CROSS = 0.2
 
 """
 Loads the postings file by byte pointer linked with the given term in dictionary
@@ -122,7 +124,7 @@ def search_query(title_dictionary, abstract_dictionary, postings_reader, query_f
         for doc_id, d_tf_w in title_postings:
             if doc_id not in score:
                 score[doc_id] = 0
-            score[doc_id] += d_tf_w * tf_idf_w / (query_title_length_for_title * title_doc_length_table[doc_id]) * 0.8
+            score[doc_id] += d_tf_w * tf_idf_w / (query_title_length_for_title * title_doc_length_table[doc_id]) * ZONE_WEIGHT_SAME
             title_to_title_matched_ids.add(doc_id)
 
     # between tilte query and docs' abstracts
@@ -134,7 +136,7 @@ def search_query(title_dictionary, abstract_dictionary, postings_reader, query_f
                 continue
             if doc_id not in score:
                 score[doc_id] = 0
-            score[doc_id] += d_tf_w * tf_idf_w / (query_title_length_for_abstract * abstract_doc_length_table[doc_id]) * 0.2
+            score[doc_id] += d_tf_w * tf_idf_w / (query_title_length_for_abstract * abstract_doc_length_table[doc_id]) * ZONE_WEIGHT_CROSS
 
     # between tilte description and docs' abstracts
     description_to_abstracts_matched_ids = set()
@@ -144,7 +146,7 @@ def search_query(title_dictionary, abstract_dictionary, postings_reader, query_f
         for doc_id, d_tf_w in abstract_postings:
             if doc_id not in score:
                 score[doc_id] = 0
-            score[doc_id] += d_tf_w * tf_idf_w / (query_description_length_for_abstract * abstract_doc_length_table[doc_id]) * 0.8
+            score[doc_id] += d_tf_w * tf_idf_w / (query_description_length_for_abstract * abstract_doc_length_table[doc_id]) * ZONE_WEIGHT_SAME
             description_to_abstracts_matched_ids.add(doc_id)
 
     # between tilte description and docs' title
@@ -156,7 +158,7 @@ def search_query(title_dictionary, abstract_dictionary, postings_reader, query_f
                 continue
             if doc_id not in score:
                 score[doc_id] = 0
-            score[doc_id] += d_tf_w * tf_idf_w / (query_description_length_for_title * title_doc_length_table[doc_id]) * 0.2
+            score[doc_id] += d_tf_w * tf_idf_w / (query_description_length_for_title * title_doc_length_table[doc_id]) * ZONE_WEIGHT_CROSS
 
     # sorting by score from most to the least
     result = score.items()
