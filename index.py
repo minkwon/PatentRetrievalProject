@@ -5,6 +5,7 @@ import os
 import math
 import xml.etree.ElementTree as ET
 import cPickle as pickle
+import unidecode
 
 """
 Returns a dictionary that maps doc ID with its document length.
@@ -68,6 +69,7 @@ def index_documents(directory_file, dictionary_file, postings_file):
         directory = directory_file + '/' if directory_file[-1] != '/' else directory_file
         # looking for Title and Abstract attribute in the document
         # Note that not all documents have Abstract
+        title = abstract = IPC_group_ID = None
         for child in ET.parse(directory + doc_id).getroot().iter():
             if child.get('name') == 'Title':
                 title = child.text
@@ -76,19 +78,22 @@ def index_documents(directory_file, dictionary_file, postings_file):
             elif child.get('name') == 'IPC Group':
                 IPC_group_ID = child.text.strip()
 
+        title = unidecode.unidecode(title)
         # Tokenization step for title: case folding, ignoring stop words and stemming
         for sentence in nltk.sent_tokenize(title):
             for word in nltk.word_tokenize(sentence):
                 if word.lower() not in stop_words:
-                    term_docID_pair =  (str(stemmer.stem(word.lower())), doc_enum_id)
+                    term_docID_pair = (str(stemmer.stem(word.lower())), doc_enum_id)
                     title_list_index.append(term_docID_pair)
 
         # The same for abstract
-        for sentence in nltk.sent_tokenize(abstract):
-            for word in nltk.word_tokenize(sentence):
-                if word.lower() not in stop_words:
-                    term_docID_pair =  (str(stemmer.stem(word.lower())), doc_enum_id)
-                    abstract_list_index.append(term_docID_pair)
+        if abstract:
+            abstract = unidecode.unidecode(abstract)
+            for sentence in nltk.sent_tokenize(abstract):
+                for word in nltk.word_tokenize(sentence):
+                    if word.lower() not in stop_words:
+                        term_docID_pair = (str(stemmer.stem(word.lower())), doc_enum_id)
+                        abstract_list_index.append(term_docID_pair)
 
         # Keeping track of IPC group id in a dictionary
         IPC_group_dictionary[doc_enum_id] = IPC_group_ID
@@ -182,6 +187,7 @@ def index_documents(directory_file, dictionary_file, postings_file):
     dictionary_writer = open(dictionary_file, "w")
     pickle.dump((title_dictionary, abstract_dictionary), dictionary_writer)
     dictionary_writer.close()
+
 
 def usage():
     print "usage: python index.py -i directory-of-documents -d dictionary-file -p postings-file"
