@@ -49,7 +49,7 @@ lnc.ltc in SMART notation.
 
 search(dict<str:int>, file, str) -> str
 """
-def search_query(dictionary, postings_reader, query_file):
+def search_query(title_dictionary, abstract_dictionary, postings_reader, query_file):
     query = ET.parse(query_file).getroot()
     query_title = query.find('title').text
     query_description = query.find('description').text
@@ -96,10 +96,10 @@ def search_query(dictionary, postings_reader, query_file):
     return str(result).strip('[]').replace(',', '')
 
 def main(dictionary_file, postings_file, query_file, output_file):
-    dictionary = pickle.load(open(dictionary_file, "rb"))
+    (title_dictionary, abstract_dictionary) = pickle.load(open(dictionary_file, "rb"))
     postings_reader = open(postings_file, "rb")
     output = open(output_file, "w")
-    result = search_query(dictionary, postings_reader, query_file)
+    result = search_query(title_dictionary, abstract_dictionary, postings_reader, query_file)
     output.write(result)
     output.write('\n')
 
