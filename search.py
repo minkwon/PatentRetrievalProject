@@ -38,6 +38,13 @@ def tokenize_query(raw_query):
     return tokenized_query
 
 
+def vector_length(vector):
+    temp = 0
+    for term, tf_idf_w in vector:
+        temp += pow(tf_idf_w, 2)
+    return pow(temp, 1/2)
+
+
 """
 Processes the raw string query and retrieves at most 10 documents by its ID for the query
 that are the most relevant to the query. The returned string is a space-delimitered doc IDs
@@ -61,16 +68,15 @@ def search_query(title_dictionary, abstract_dictionary, postings_reader, query_f
     if query_description.strip() == '':
         query_description = None
     score = {}
-    query_title_weighted_tf_idf_table_for_title \
-        = query_title_weighted_tf_idf_table_for_abstract \
-        = query_description_weighted_tf_idf_table_for_title \
-        = query_description_weighted_tf_idf_table_for_abstract = {}
+    query_title_weighted_tf_idf_table_for_title = {}
+    query_title_weighted_tf_idf_table_for_abstract = {}
+    query_description_weighted_tf_idf_table_for_title = {}
+    query_description_weighted_tf_idf_table_for_abstract = {}
     title_doc_length_table = load_postings_by_term("TITLE DOC LENGTH TABLE", title_dictionary, postings_reader)
     abstract_doc_length_table = load_postings_by_term("ABSTRACT DOC LENGTH TABLE", abstract_dictionary, postings_reader)
 
     query_title_tokens = tokenize_query(query_title)
     query_description_tokens = tokenize_query(query_description)
-
 
     # calculating each term's weighted tf-idf in query
     for title_term, qt_frequency in query_title_tokens.iteritems():
@@ -98,19 +104,55 @@ def search_query(title_dictionary, abstract_dictionary, postings_reader, query_f
             query_description_weighted_tf_idf_table_for_abstract[description_term] = tf_w * idf_in_abstract
 
     # calculating query length
-    temp = 0
-    for term, tf_idf_w in query_weighted_tf_idf_table.iteritems():
-        temp += pow(tf_idf_w, 2)
-    query_length = pow(temp, 1/2)
+    query_title_length_for_title = vector_length(query_title_weighted_tf_idf_table_for_title.iteritems())
+    query_title_length_for_abstract = vector_length(query_title_weighted_tf_idf_table_for_abstract.iteritems())
+    query_description_length_for_title = vector_length(query_description_weighted_tf_idf_table_for_title.iteritems())
+    query_description_length_for_abstract = vector_length(query_description_weighted_tf_idf_table_for_abstract.iteritems())
 
     # calculating cosine angle between two vectors
-    for term, tf_idf_w in query_weighted_tf_idf_table.iteritems():
-        postings = load_postings_by_term(term, dictionary, postings_reader)
-        for doc_id, d_tf_w in postings:
-            if doc_id in score:
-                score[doc_id] += d_tf_w * tf_idf_w / (query_length * doc_length_table[doc_id])
-            else:
-                score[doc_id] = d_tf_w * tf_idf_w / (query_length * doc_length_table[doc_id])
+    # between tilte query and docs' titles
+    title_to_title_matched_ids = set()
+    for term, tf_idf_w in query_title_weighted_tf_idf_table_for_title.iteritems():
+        title_postings = load_postings_by_term(term, title_dictionary, postings_reader)
+
+        for doc_id, d_tf_w in title_postings:
+            if doc_id not in score:
+                score[doc_id] = 0
+            score[doc_id] += d_tf_w * tf_idf_w / (query_title_length_for_title * title_doc_length_table[doc_id]) * 0.8
+            title_to_title_matched_ids.add(doc_id)
+
+    # between tilte query and docs' abstracts
+    for term, tf_idf_w in query_title_weighted_tf_idf_table_for_abstract.iteritems():
+        abstract_postings = load_postings_by_term(term, abstract_dictionary, postings_reader)
+
+        for doc_id, d_tf_w in abstract_postings:
+            if doc_id in title_to_title_matched_ids:
+                continue
+            if doc_id not in score:
+                score[doc_id] = 0
+            score[doc_id] += d_tf_w * tf_idf_w / (query_title_length_for_abstract * abstract_doc_length_table[doc_id]) * 0.2
+
+    # between tilte description and docs' abstracts
+    description_to_abstracts_matched_ids = set()
+    for term, tf_idf_w in query_description_weighted_tf_idf_table_for_abstract.iteritems():
+        abstract_postings = load_postings_by_term(term, abstract_dictionary, postings_reader)
+
+        for doc_id, d_tf_w in abstract_postings:
+            if doc_id not in score:
+                score[doc_id] = 0
+            score[doc_id] += d_tf_w * tf_idf_w / (query_description_length_for_abstract * abstract_doc_length_table[doc_id]) * 0.8
+            description_to_abstracts_matched_ids.add(doc_id)
+
+    # between tilte description and docs' title
+    for term, tf_idf_w in query_description_weighted_tf_idf_table_for_title.iteritems():
+        title_postings = load_postings_by_term(term, title_dictionary, postings_reader)
+
+        for doc_id, d_tf_w in title_postings:
+            if doc_id in description_to_abstracts_matched_ids:
+                continue
+            if doc_id not in score:
+                score[doc_id] = 0
+            score[doc_id] += d_tf_w * tf_idf_w / (query_description_length_for_title * title_doc_length_table[doc_id]) * 0.2
 
     # sorting by score from most to the least
     result = score.items()
@@ -118,6 +160,7 @@ def search_query(title_dictionary, abstract_dictionary, postings_reader, query_f
 
     # TODO: MUST RETURN NULL IF NO PATENTS ARE RELEVANT
     return str(result).strip('[]').replace(',', '')
+
 
 def main(dictionary_file, postings_file, query_file, output_file):
     (title_dictionary, abstract_dictionary) = pickle.load(open(dictionary_file, "rb"))
