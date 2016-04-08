@@ -2,6 +2,7 @@ import sys
 import getopt
 import nltk
 import math
+import xml.etree.ElementTree as ET
 import cPickle as pickle
 
 """
@@ -48,9 +49,17 @@ lnc.ltc in SMART notation.
 
 search(dict<str:int>, file, str) -> str
 """
-def search_query(dictionary, postings_reader, raw_query):
-    if raw_query == '\n':
+def search_query(dictionary, postings_reader, query_file):
+    query = ET.parse(query_file).getroot()
+    query_title = query.find('title').text
+    query_description = query.find('description').text
+
+    # If title is missing, return empty string
+    if query_title.strip() == '':
         return ''
+    # If description is missing, still query but description is None
+    if query_description.strip() == '':
+        query_description = None
     score = {}
     query_weighted_tf_idf_table = {}
     doc_length_table = load_postings_by_term("DOC LENGTH TABLE", dictionary, postings_reader)
@@ -82,6 +91,7 @@ def search_query(dictionary, postings_reader, raw_query):
     # sorting by score from most to the least
     result = score.items()
     result.sort(key=lambda docId_score_pair: docId_score_pair[1], reverse=True)
+
     # TODO: MUST RETURN NULL IF NO PATENTS ARE RELEVANT
     return str(result).strip('[]').replace(',', '')
 
@@ -89,8 +99,7 @@ def main(dictionary_file, postings_file, query_file, output_file):
     dictionary = pickle.load(open(dictionary_file, "rb"))
     postings_reader = open(postings_file, "rb")
     output = open(output_file, "w")
-    query = open(query_file, "r").readlines() # TODO change
-    result = search_query(dictionary, postings_reader, query)
+    result = search_query(dictionary, postings_reader, query_file)
     output.write(result)
     output.write('\n')
 
