@@ -23,7 +23,7 @@ The tokenization involves case-folding and stemming with PorterStemmer object.
 
 tokenize_query -> dict<term:term frequency, ...>
 """
-def tokenize_query(raw_query, dictionary):
+def tokenize_query(raw_query):
     temp = []
     tokenized_query = {}
     stemmer = nltk.stem.porter.PorterStemmer()
@@ -61,17 +61,41 @@ def search_query(title_dictionary, abstract_dictionary, postings_reader, query_f
     if query_description.strip() == '':
         query_description = None
     score = {}
-    query_weighted_tf_idf_table = {}
-    doc_length_table = load_postings_by_term("DOC LENGTH TABLE", dictionary, postings_reader)
-    query_tokens = tokenize_query(raw_query, dictionary)
+    query_title_weighted_tf_idf_table_for_title \
+        = query_title_weighted_tf_idf_table_for_abstract \
+        = query_description_weighted_tf_idf_table_for_title \
+        = query_description_weighted_tf_idf_table_for_abstract = {}
+    title_doc_length_table = load_postings_by_term("TITLE DOC LENGTH TABLE", title_dictionary, postings_reader)
+    abstract_doc_length_table = load_postings_by_term("ABSTRACT DOC LENGTH TABLE", abstract_dictionary, postings_reader)
+
+    query_title_tokens = tokenize_query(query_title)
+    query_description_tokens = tokenize_query(query_description)
+
 
     # calculating each term's weighted tf-idf in query
-    for term, q_frequency in query_tokens.iteritems():
+    for title_term, qt_frequency in query_title_tokens.iteritems():
         # only calculating score if term is indexed
-        if term in dictionary:
-            tf_w = 1 + math.log(q_frequency, 10)
-            idf = math.log(len(doc_length_table) / (dictionary[term][0] * 1.0), 10)
-            query_weighted_tf_idf_table[term] = tf_w * idf
+        tf_w = 1 + math.log(qt_frequency, 10)
+
+        if title_term in title_dictionary:
+            idf_in_title = math.log(len(title_doc_length_table) / (title_dictionary[title_term][0] * 1.0), 10)
+            query_title_weighted_tf_idf_table_for_title[title_term] = tf_w * idf_in_title
+
+        if title_term in abstract_dictionary:
+            idf_in_abstract = math.log(len(abstract_doc_length_table) / (abstract_dictionary[title_term][0] * 1.0), 10)
+            query_title_weighted_tf_idf_table_for_abstract[title_term] = tf_w * idf_in_abstract
+
+    for description_term, qd_frequency in query_description_tokens.iteritems():
+        # only calculating score if term is indexed
+        tf_w = 1 + math.log(qd_frequency, 10)
+
+        if description_term in title_dictionary:
+            idf_in_title = math.log(len(title_doc_length_table) / (title_dictionary[description_term][0] * 1.0), 10)
+            query_description_weighted_tf_idf_table_for_title[description_term] = tf_w * idf_in_title
+
+        if description_term in abstract_dictionary:
+            idf_in_abstract = math.log(len(abstract_doc_length_table) / (abstract_dictionary[description_term][0] * 1.0), 10)
+            query_description_weighted_tf_idf_table_for_abstract[description_term] = tf_w * idf_in_abstract
 
     # calculating query length
     temp = 0
