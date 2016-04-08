@@ -5,6 +5,8 @@ import math
 import xml.etree.ElementTree as ET
 import cPickle as pickle
 
+QUERY_DESCRIPTION_PREFIX = "Relevant documents will describe"
+
 """
 Loads the postings file by byte pointer linked with the given term in dictionary
 
@@ -59,7 +61,9 @@ search(dict<str:int>, file, str) -> str
 def search_query(title_dictionary, abstract_dictionary, postings_reader, query_file):
     query = ET.parse(query_file).getroot()
     query_title = query.find('title').text
-    query_description = query.find('description').text
+    query_description = query.find('description').text.strip()
+    if query_description[:len(QUERY_DESCRIPTION_PREFIX)] == QUERY_DESCRIPTION_PREFIX:
+        query_description = query_description[len(QUERY_DESCRIPTION_PREFIX):]
 
     # If title is missing, return empty string
     if query_title.strip() == '':
