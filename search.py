@@ -161,11 +161,18 @@ def search_query(title_dictionary, abstract_dictionary, postings_reader, query_f
             score[doc_id] += d_tf_w * tf_idf_w / (query_description_length_for_title * title_doc_length_table[doc_id]) * ZONE_WEIGHT_CROSS
 
     # sorting by score from most to the least
-    result = score.items()
-    result.sort(key=lambda docId_score_pair: docId_score_pair[1], reverse=True)
-
+	result = score.items()
+	result.sort(key=lambda docId_score_pair: docId_score_pair[1], reverse=True)
+	
     # TODO: MUST RETURN NULL IF NO PATENTS ARE RELEVANT
-    return str(result).strip('[]').replace(',', '')
+	resultString = ""
+	doc_id_map = load_postings_by_term("DOC ID MAP", title_dictionary, postings_reader)
+
+	for doc_id, score in result:
+		resultString += doc_id_map[doc_id][:-4] + " "
+		
+	resultString = resultString[:-1] 
+	return resultString
 
 
 def main(dictionary_file, postings_file, query_file, output_file):
