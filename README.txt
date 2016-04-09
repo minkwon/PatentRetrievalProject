@@ -1,4 +1,4 @@
-This is the README file for A0000000X's submission
+This is the README file for A0148916U-A0133920N-A0125495Y-A0105508M's submission
 
 == General Notes about this assignment ==
 
@@ -49,7 +49,7 @@ and formatted correctly.
 
 Please initial one of the following statements.
 
-[X] I, A0000000X, certify that I have followed the CS 3245 Information
+[X] I, A0148916U-A0133920N-A0125495Y-A0105508M, certify that I have followed the CS 3245 Information
 Retrieval class guidelines for homework assignments.  In particular, I
 expressly vow that I have followed the Facebook rule in discussing
 with others in doing the assignment and did not take notes (digital or
