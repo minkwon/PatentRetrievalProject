@@ -8,12 +8,34 @@ sufficient.
 
 Feature:
 
+Zone weighting
+--------------
+T = title
+A = abstract
+q = query
+d = document
+
+Same zone matches are given higher weight than cross-zone matches
+
+Current: 0.6 for same zone, 0.4 for cross zone
+
 <T,q> -> <T,d> gives higher score than <T,q> -> <A,d>
 
 <A,q> -> <T,d> ??? <A,q> -> <A,d>
 
-document's enumumerated id is indexed instead of its actual doc id to
+Document ID enummeration
+------------------------
+Document's enumumerated id is indexed instead of its actual doc id to
 be compatible with the implementations in search.py
+
+Top-N group multipliers
+-----------------------
+based on tf-idf + zone weighting, scores are sorted.
+Thereafter, the top N groups are chosen and given multipliers
+
+Current: Top 2 groups, 0.1 multiplier
+
+1st group = 1.2x, 2nd group = 1.1x
 
 
 
