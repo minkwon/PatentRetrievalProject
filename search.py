@@ -8,6 +8,8 @@ import cPickle as pickle
 QUERY_DESCRIPTION_PREFIX = "Relevant documents will describe"
 ZONE_WEIGHT_SAME = 0.8
 ZONE_WEIGHT_CROSS = 0.2
+TOP_N_GROUP = 2
+INCREMENT_MULTIPLIER = 0.1
 
 """
 Loads the postings file by byte pointer linked with the given term in dictionary
@@ -164,13 +166,53 @@ def search_query(title_dictionary, abstract_dictionary, postings_reader, query_f
 	result = score.items()
 	result.sort(key=lambda docId_score_pair: docId_score_pair[1], reverse=True)
 	
+	#top N category score multiplier
+	IPC_group_dictionary = load_postings_by_term("IPC GROUP DICTIONARY", title_dictionary, postings_reader)
+	target_id_multiplier = {}
+	multiplied_results = []
+	counter = 0	
+	
+	for num in range(TOP_N_GROUP, 0, -1):
+		
+		#check if there are enough category in results to fit N groups
+		if(counter >= len(result)):
+			break	
+		else:
+			#resolve group
+			target_doc_id = result[counter][0]
+			counter += 1
+			target_group = IPC_group_dictionary[target_doc_id]
+			
+			#check if group is recorded
+			if target_group not in target_id_multiplier:
+				target_id_multiplier[target_group] = 1 + (num*INCREMENT_MULTIPLIER)
+			else:
+				num += 1
+	
+	#apply multipliers to scores of results with matching category
+	for doc_id, score in result:
+		temp_list = []
+		if IPC_group_dictionary[doc_id] in target_id_multiplier:		
+			temp_list.append(doc_id)
+			temp_list.append(score * target_id_multiplier[IPC_group_dictionary[doc_id]])
+			multiplied_results.append(temp_list)
+		else:
+			temp_list.append(doc_id)
+			temp_list.append(score)
+			multiplied_results.append(temp_list)
+	
     # TODO: MUST RETURN NULL IF NO PATENTS ARE RELEVANT
+	
+	#sort again after adjusting scores
+	multiplied_results.sort(key=lambda docId_score_pair: docId_score_pair[1], reverse=True)
+	
 	resultString = ""
 	doc_id_map = load_postings_by_term("DOC ID MAP", title_dictionary, postings_reader)
+	
 
-	for doc_id, score in result:
+	for doc_id, score in multiplied_results:
 		resultString += doc_id_map[doc_id] + " "
-		
+
 	return resultString[:-1] 
 
 
