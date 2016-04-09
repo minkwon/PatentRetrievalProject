@@ -65,7 +65,7 @@ def index_documents(directory_file, dictionary_file, postings_file):
     # parsing an XML file in lexicographical order of doc id
     for doc_id in sorted(os.listdir(directory_file)):
         doc_enum_id += 1
-        doc_id_map[doc_enum_id] = doc_id
+        doc_id_map[doc_enum_id] = doc_id[:-4]
         directory = directory_file + '/' if directory_file[-1] != '/' else directory_file
         # looking for Title and Abstract attribute in the document
         # Note that not all documents have Abstract
