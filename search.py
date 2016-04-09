@@ -169,10 +169,9 @@ def search_query(title_dictionary, abstract_dictionary, postings_reader, query_f
 	doc_id_map = load_postings_by_term("DOC ID MAP", title_dictionary, postings_reader)
 
 	for doc_id, score in result:
-		resultString += doc_id_map[doc_id][:-4] + " "
+		resultString += doc_id_map[doc_id] + " "
 		
-	resultString = resultString[:-1] 
-	return resultString
+	return resultString[:-1] 
 
 
 def main(dictionary_file, postings_file, query_file, output_file):
