@@ -5,7 +5,6 @@ import os
 import math
 import xml.etree.ElementTree as ET
 import cPickle as pickle
-import unidecode
 
 """
 Returns a dictionary that maps doc ID with its document length.
@@ -78,19 +77,27 @@ def index_documents(directory_file, dictionary_file, postings_file):
             elif child.get('name') == 'IPC Group':
                 IPC_group_ID = child.text.strip()
 
-        title = unidecode.unidecode(title)
         # Tokenization step for title: case folding, ignoring stop words and stemming
         for sentence in nltk.sent_tokenize(title):
             for word in nltk.word_tokenize(sentence):
+                # Ignoring any word that contains non-ascii characters
+                try:
+                    word.decode('ascii')
+                except UnicodeEncodeError:
+                    continue
                 if word.lower() not in stop_words:
                     term_docID_pair = (str(stemmer.stem(word.lower())), doc_enum_id)
                     title_list_index.append(term_docID_pair)
 
         # The same for abstract
         if abstract:
-            abstract = unidecode.unidecode(abstract)
             for sentence in nltk.sent_tokenize(abstract):
                 for word in nltk.word_tokenize(sentence):
+                    # Ignoring any word that contains non-ascii characters
+                    try:
+                        word.decode('ascii')
+                    except UnicodeEncodeError:
+                        continue
                     if word.lower() not in stop_words:
                         term_docID_pair = (str(stemmer.stem(word.lower())), doc_enum_id)
                         abstract_list_index.append(term_docID_pair)
