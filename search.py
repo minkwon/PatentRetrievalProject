@@ -6,10 +6,10 @@ import xml.etree.ElementTree as ET
 import cPickle as pickle
 
 QUERY_DESCRIPTION_PREFIX = "Relevant documents will describe"
-ZONE_WEIGHT_SAME = 0.8
-ZONE_WEIGHT_CROSS = 0.2
-TOP_N_GROUP = 2
-INCREMENT_MULTIPLIER = 0.1
+ZONE_WEIGHT_SAME = 0.7
+ZONE_WEIGHT_CROSS = 0.3
+TOP_N_GROUP = 4
+INCREMENT_MULTIPLIER = 0.8
 
 """
 Loads the postings file by byte pointer linked with the given term in dictionary
