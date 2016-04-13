@@ -45,7 +45,7 @@ def tokenize_query(raw_query):
 	
 	for word, pos in tagged_query:
 		temp.append(str(stemmer.stem(word.lower())))
-
+		print "for ", word
 		#check if word is a type of noun, if yes, find syn as query expansion
 		if (pos == 'NN' or pos == 'NNP' or pos == 'NNS' or pos == 'NNPS'):
 			for synset in wn.synsets(word):
@@ -54,9 +54,9 @@ def tokenize_query(raw_query):
 		tempList = list(set(tempList))
 		for syn in tempList:
 			temp.append(str(stemmer.stem(syn.name().lower())))
+			print "syn:", syn.name()
 			tempList = []
-
-			
+		print("")
     #for word in nltk.word_tokenize(raw_query):
     #    temp.append(str(stemmer.stem(word.lower())))
 	temp.sort()
