@@ -4,6 +4,8 @@ import nltk
 import math
 import xml.etree.ElementTree as ET
 import cPickle as pickle
+from nltk.corpus import wordnet as wn
+from nltk.tag import pos_tag
 
 QUERY_DESCRIPTION_PREFIX = "Relevant documents will describe"
 ZONE_WEIGHT_SAME = 0.7
@@ -30,6 +32,7 @@ The tokenization involves case-folding and stemming with PorterStemmer object.
 tokenize_query -> dict<term:term frequency, ...>
 """
 def tokenize_query(raw_query):
+
     temp = []
     tokenized_query = {}
     stemmer = nltk.stem.porter.PorterStemmer()
@@ -50,7 +53,7 @@ def tokenize_query(raw_query):
 		tempList = list(set(tempList))
 		for syn in tempList:
 			temp.append(str(stemmer.stem(syn.name().lower())))
-			tempList = []
+		tempList = []
 	'''
 	
     for word in nltk.word_tokenize(raw_query):
@@ -62,7 +65,6 @@ def tokenize_query(raw_query):
         else:
             tokenized_query[term] = 1
     return tokenized_query
-
 
 def vector_length(vector):
     temp = 0
