@@ -20,9 +20,12 @@ Pre-condition: term in dictionary == True
 
 get_postings_list_by_term(str, dict<str:int>, file) -> [(int, float), ...]
 """
+
+
 def load_postings_by_term(term, dictionary, postings_reader):
     postings_reader.seek(dictionary[term][1])
     return pickle.load(postings_reader)
+
 
 """
 Given raw query is tokenized and each term's frequency is calculated.
@@ -31,6 +34,8 @@ The tokenization involves case-folding and stemming with PorterStemmer object.
 
 tokenize_query -> dict<term:term frequency, ...>
 """
+
+
 def tokenize_query(raw_query):
 
     temp = []
@@ -70,27 +75,10 @@ def vector_length(vector):
     temp = 0
     for term, tf_idf_w in vector:
         temp += pow(tf_idf_w, 2)
-    return pow(temp, 1/2)
+    return pow(temp, 1 / 2)
 
 
-"""
-Processes the raw string query and retrieves at most 10 documents by its ID for the query
-that are the most relevant to the query. The returned string is a space-delimitered doc IDs
-in the order of relevance from highest to the lowest.
-
-The relevance is determined by the accumulated score of each document's cosine similarity
-between its document vector and the query vector. The ranking scheme for the algorithm is
-lnc.ltc in SMART notation.
-
-search(dict<str:int>, file, str) -> str
-"""
-def search_query(title_dictionary, abstract_dictionary, postings_reader, query_file):
-    query = ET.parse(query_file).getroot()
-    query_title = query.find('title').text
-    query_description = query.find('description').text.strip()
-    if query_description[:len(QUERY_DESCRIPTION_PREFIX)] == QUERY_DESCRIPTION_PREFIX:
-        query_description = query_description[len(QUERY_DESCRIPTION_PREFIX):]
-
+def perform_search(query_title, query_description, title_dictionary, abstract_dictionary, postings_reader):
     # If title is missing, return empty string
     if query_title.strip() == '':
         return ''
@@ -130,14 +118,16 @@ def search_query(title_dictionary, abstract_dictionary, postings_reader, query_f
             query_description_weighted_tf_idf_table_for_title[description_term] = tf_w * idf_in_title
 
         if description_term in abstract_dictionary:
-            idf_in_abstract = math.log(len(abstract_doc_length_table) / (abstract_dictionary[description_term][0] * 1.0), 10)
+            idf_in_abstract = math.log(
+                len(abstract_doc_length_table) / (abstract_dictionary[description_term][0] * 1.0), 10)
             query_description_weighted_tf_idf_table_for_abstract[description_term] = tf_w * idf_in_abstract
 
     # calculating query length
     query_title_length_for_title = vector_length(query_title_weighted_tf_idf_table_for_title.iteritems())
     query_title_length_for_abstract = vector_length(query_title_weighted_tf_idf_table_for_abstract.iteritems())
     query_description_length_for_title = vector_length(query_description_weighted_tf_idf_table_for_title.iteritems())
-    query_description_length_for_abstract = vector_length(query_description_weighted_tf_idf_table_for_abstract.iteritems())
+    query_description_length_for_abstract = vector_length(
+        query_description_weighted_tf_idf_table_for_abstract.iteritems())
 
     # calculating cosine angle between two vectors
     # between tilte query and docs' titles
@@ -148,7 +138,8 @@ def search_query(title_dictionary, abstract_dictionary, postings_reader, query_f
         for doc_id, d_tf_w in title_postings:
             if doc_id not in score:
                 score[doc_id] = 0
-            score[doc_id] += d_tf_w * tf_idf_w / (query_title_length_for_title * title_doc_length_table[doc_id]) * ZONE_WEIGHT_SAME
+            score[doc_id] += d_tf_w * tf_idf_w / (
+            query_title_length_for_title * title_doc_length_table[doc_id]) * ZONE_WEIGHT_SAME
             title_to_title_matched_ids.add(doc_id)
 
     # between tilte query and docs' abstracts
@@ -160,7 +151,8 @@ def search_query(title_dictionary, abstract_dictionary, postings_reader, query_f
                 continue
             if doc_id not in score:
                 score[doc_id] = 0
-            score[doc_id] += d_tf_w * tf_idf_w / (query_title_length_for_abstract * abstract_doc_length_table[doc_id]) * ZONE_WEIGHT_CROSS
+            score[doc_id] += d_tf_w * tf_idf_w / (
+            query_title_length_for_abstract * abstract_doc_length_table[doc_id]) * ZONE_WEIGHT_CROSS
 
     # between tilte description and docs' abstracts
     description_to_abstracts_matched_ids = set()
@@ -170,7 +162,8 @@ def search_query(title_dictionary, abstract_dictionary, postings_reader, query_f
         for doc_id, d_tf_w in abstract_postings:
             if doc_id not in score:
                 score[doc_id] = 0
-            score[doc_id] += d_tf_w * tf_idf_w / (query_description_length_for_abstract * abstract_doc_length_table[doc_id]) * ZONE_WEIGHT_SAME
+            score[doc_id] += d_tf_w * tf_idf_w / (
+            query_description_length_for_abstract * abstract_doc_length_table[doc_id]) * ZONE_WEIGHT_SAME
             description_to_abstracts_matched_ids.add(doc_id)
 
     # between tilte description and docs' title
@@ -182,60 +175,89 @@ def search_query(title_dictionary, abstract_dictionary, postings_reader, query_f
                 continue
             if doc_id not in score:
                 score[doc_id] = 0
-            score[doc_id] += d_tf_w * tf_idf_w / (query_description_length_for_title * title_doc_length_table[doc_id]) * ZONE_WEIGHT_CROSS
+            score[doc_id] += d_tf_w * tf_idf_w / (
+            query_description_length_for_title * title_doc_length_table[doc_id]) * ZONE_WEIGHT_CROSS
+
+    return score
+
+
+"""
+Processes the raw string query and retrieves at most 10 documents by its ID for the query
+that are the most relevant to the query. The returned string is a space-delimitered doc IDs
+in the order of relevance from highest to the lowest.
+
+The relevance is determined by the accumulated score of each document's cosine similarity
+between its document vector and the query vector. The ranking scheme for the algorithm is
+lnc.ltc in SMART notation.
+
+search(dict<str:int>, file, str) -> str
+"""
+
+
+def search_query(title_dictionary, abstract_dictionary, postings_reader, query_file):
+    """
+
+    :rtype : dictionary of doc id to query
+    """
+    query = ET.parse(query_file).getroot()
+    query_title = query.find('title').text
+    query_description = query.find('description').text.strip()
+    if query_description[:len(QUERY_DESCRIPTION_PREFIX)] == QUERY_DESCRIPTION_PREFIX:
+        query_description = query_description[len(QUERY_DESCRIPTION_PREFIX):]
+
+    score = perform_search(query_title, query_description, title_dictionary, abstract_dictionary, postings_reader)
 
     # sorting by score from most to the least
-	result = score.items()
-	result.sort(key=lambda docId_score_pair: docId_score_pair[1], reverse=True)
-	
-	#top N category score multiplier
-	IPC_group_dictionary = load_postings_by_term("IPC GROUP DICTIONARY", title_dictionary, postings_reader)
-	target_id_multiplier = {}
-	multiplied_results = []
-	counter = 0	
-	
-	for num in range(TOP_N_GROUP, 0, -1):
-		
-		#check if there are enough category in results to fit N groups
-		if(counter >= len(result)):
-			break	
-		else:
-			#resolve group
-			target_doc_id = result[counter][0]
-			counter += 1
-			target_group = IPC_group_dictionary[target_doc_id]
-			
-			#check if group is recorded
-			if target_group not in target_id_multiplier:
-				target_id_multiplier[target_group] = 1 + (num*INCREMENT_MULTIPLIER)
-			else:
-				num += 1
-	
-	#apply multipliers to scores of results with matching category
-	for doc_id, score in result:
-		temp_list = []
-		if IPC_group_dictionary[doc_id] in target_id_multiplier:		
-			temp_list.append(doc_id)
-			temp_list.append(score * target_id_multiplier[IPC_group_dictionary[doc_id]])
-			multiplied_results.append(temp_list)
-		else:
-			temp_list.append(doc_id)
-			temp_list.append(score)
-			multiplied_results.append(temp_list)
-	
-    # TODO: MUST RETURN NULL IF NO PATENTS ARE RELEVANT
-	
-	#sort again after adjusting scores
-	multiplied_results.sort(key=lambda docId_score_pair: docId_score_pair[1], reverse=True)
-	
-	resultString = ""
-	doc_id_map = load_postings_by_term("DOC ID MAP", title_dictionary, postings_reader)
-	
+    result = score.items()
+    result.sort(key=lambda docId_score_pair: docId_score_pair[1], reverse=True)
 
-	for doc_id, score in multiplied_results:
-		resultString += doc_id_map[doc_id] + " "
+    # top N category score multiplier
+    IPC_group_dictionary = load_postings_by_term("IPC GROUP DICTIONARY", title_dictionary, postings_reader)
+    target_id_multiplier = {}
+    multiplied_results = []
+    counter = 0
 
-	return resultString[:-1] 
+    for num in range(TOP_N_GROUP, 0, -1):
+
+        # check if there are enough category in results to fit N groups
+        if counter >= len(result):
+            break
+        else:
+            # resolve group
+            target_doc_id = result[counter][0]
+            counter += 1
+            target_group = IPC_group_dictionary[target_doc_id]
+
+            # check if group is recorded
+            if target_group not in target_id_multiplier:
+                target_id_multiplier[target_group] = 1 + (num * INCREMENT_MULTIPLIER)
+            else:
+                num += 1
+
+        # apply multipliers to scores of results with matching category
+    for doc_id, score in result:
+        temp_list = []
+        if IPC_group_dictionary[doc_id] in target_id_multiplier:
+            temp_list.append(doc_id)
+            temp_list.append(score * target_id_multiplier[IPC_group_dictionary[doc_id]])
+            multiplied_results.append(temp_list)
+        else:
+            temp_list.append(doc_id)
+            temp_list.append(score)
+            multiplied_results.append(temp_list)
+
+            # TODO: MUST RETURN NULL IF NO PATENTS ARE RELEVANT
+
+        # sort again after adjusting scores
+    multiplied_results.sort(key=lambda docId_score_pair: docId_score_pair[1], reverse=True)
+
+    resultString = ""
+    doc_id_map = load_postings_by_term("DOC ID MAP", title_dictionary, postings_reader)
+
+    for doc_id, score in multiplied_results:
+        resultString += doc_id_map[doc_id] + " "
+
+    return resultString[:-1]
 
 
 def main(dictionary_file, postings_file, query_file, output_file):
@@ -246,10 +268,12 @@ def main(dictionary_file, postings_file, query_file, output_file):
     output.write(result)
     output.write('\n')
 
+
 def usage():
     print "usage: python search.py -d dictionary-file -p postings-file -q query-file -o output-file-of-results"
 
-dictionary_file = postings_file = query_file = output_file =  None
+
+dictionary_file = postings_file = query_file = output_file = None
 try:
     opts, args = getopt.getopt(sys.argv[1:], 'd:p:q:o:')
 except getopt.GetoptError, err:
