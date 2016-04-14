@@ -37,6 +37,9 @@ Current: Top 2 groups, 0.1 multiplier
 
 1st group = 1.2x, 2nd group = 1.1x
 
+Synonyms for noun words (query expansion)
+-----------------------------------------
+If the query word is a noun, find the synonyms and add as query
 
 
 == Files included with this submission ==
@@ -65,3 +68,11 @@ I suggest that I should be graded as follows:
 As fairly as anybody in the class who have put in the work individually with honesty.
 
 == References ==
+nltk wordnet
+http://www.nltk.org/howto/wordnet.html
+
+nltk pos_tag
+http://stackoverflow.com/questions/17669952/finding-proper-nouns-using-nltk-wordnet
+http://stackoverflow.com/questions/15388831/what-are-all-possible-pos-tags-of-nltk
+http://stackoverflow.com/questions/35861482/nltk-lookup-error
+http://troublevn.com/265142/nltk-pos-tagging-not-working
