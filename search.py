@@ -42,7 +42,7 @@ def tokenize_query(raw_query):
     tokenized_query = {}
     stemmer = nltk.stem.porter.PorterStemmer()
 	
-	''' # for nouns synonyms (negative impact)
+	''' # for nouns only synonyms (negative impact)
 	#tag what type of word it is and check for nouns later
 	tagged_query = pos_tag(nltk.word_tokenize(raw_query))
 	tempList = []
