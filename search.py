@@ -212,7 +212,7 @@ def search_query(title_dictionary, abstract_dictionary, postings_reader, query_f
                     abstract = child.text
         score_for_new_query = perform_search(title, abstract, title_dictionary, abstract_dictionary, postings_reader)
         for doc_id in score_for_new_query:
-            if id in score:
+            if doc_id in score:
                 score[doc_id] += score_for_new_query[doc_id]
             else:
                 score[doc_id] = score_for_new_query[doc_id]
