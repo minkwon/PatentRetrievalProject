@@ -33,6 +33,26 @@ def tokenize_query(raw_query):
     temp = []
     tokenized_query = {}
     stemmer = nltk.stem.porter.PorterStemmer()
+	
+	''' # for nouns synonyms (negative impact)
+	#tag what type of word it is and check for nouns later
+	tagged_query = pos_tag(nltk.word_tokenize(raw_query))
+	tempList = []
+		
+	for word, pos in tagged_query:
+		temp.append(str(stemmer.stem(word.lower())))
+		#check if word is a type of noun, if yes, find syn as query expansion
+		#for information on tags -> nltk.help.upenn_tagset()
+		if (pos == 'NN' or pos == 'NNP' or pos == 'NNS' or pos == 'NNPS'):
+			for synset in wn.synsets(word):
+				for lemma in synset.lemmas():
+					tempList.append(lemma)
+		tempList = list(set(tempList))
+		for syn in tempList:
+			temp.append(str(stemmer.stem(syn.name().lower())))
+			tempList = []
+	'''
+	
     for word in nltk.word_tokenize(raw_query):
         temp.append(str(stemmer.stem(word.lower())))
     temp.sort()
