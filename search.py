@@ -77,7 +77,7 @@ def tokenize_query(raw_query):
             temp.append(str(stemmer.stem(syn.name().lower())))
         tempList = []
     '''
-	
+
     for word in nltk.word_tokenize(raw_query):
         # Ignoring any word that contains non-ascii characters
         try:
@@ -95,6 +95,9 @@ def tokenize_query(raw_query):
 
 
 def vector_length(vector):
+    """
+    Compute the length of the vector
+    """
     temp = 0
     for term, tf_idf_w in vector:
         temp += pow(tf_idf_w, 2)
@@ -102,6 +105,10 @@ def vector_length(vector):
 
 
 def perform_search(query_title, query_description, title_dictionary, abstract_dictionary, postings_reader):
+    """
+    Processes a query with title and abstract
+    Return unsorted scores
+    """
     # If title is missing, return empty string
     if query_title.strip() == '':
         return ''
@@ -109,10 +116,17 @@ def perform_search(query_title, query_description, title_dictionary, abstract_di
     if query_description.strip() == '':
         query_description = None
     score = {}
+
+    # zone weight
+
+    # use four tables to store the scores for title-title, title-abstract, description-title,
+    # description-abstract matchs
     query_title_weighted_tf_idf_table_for_title = {}
     query_title_weighted_tf_idf_table_for_abstract = {}
     query_description_weighted_tf_idf_table_for_title = {}
     query_description_weighted_tf_idf_table_for_abstract = {}
+
+    # read documents' part lengths
     title_doc_length_table = load_postings_by_term("TITLE DOC LENGTH TABLE", title_dictionary, postings_reader)
     abstract_doc_length_table = load_postings_by_term("ABSTRACT DOC LENGTH TABLE", abstract_dictionary, postings_reader)
 
@@ -161,8 +175,7 @@ def perform_search(query_title, query_description, title_dictionary, abstract_di
         for doc_id, d_tf_w in title_postings:
             if doc_id not in score:
                 score[doc_id] = 0
-            score[doc_id] += d_tf_w * tf_idf_w / (
-            query_title_length_for_title * title_doc_length_table[doc_id]) * ZONE_WEIGHT_SAME
+            score[doc_id] += d_tf_w * tf_idf_w / (query_title_length_for_title * title_doc_length_table[doc_id]) * ZONE_WEIGHT_SAME
             title_to_title_matched_ids.add(doc_id)
 
     # between tilte query and docs' abstracts
@@ -174,8 +187,7 @@ def perform_search(query_title, query_description, title_dictionary, abstract_di
                 continue
             if doc_id not in score:
                 score[doc_id] = 0
-            score[doc_id] += d_tf_w * tf_idf_w / (
-            query_title_length_for_abstract * abstract_doc_length_table[doc_id]) * ZONE_WEIGHT_CROSS
+            score[doc_id] += d_tf_w * tf_idf_w / (query_title_length_for_abstract * abstract_doc_length_table[doc_id]) * ZONE_WEIGHT_CROSS
 
     # between tilte description and docs' abstracts
     description_to_abstracts_matched_ids = set()
@@ -185,8 +197,7 @@ def perform_search(query_title, query_description, title_dictionary, abstract_di
         for doc_id, d_tf_w in abstract_postings:
             if doc_id not in score:
                 score[doc_id] = 0
-            score[doc_id] += d_tf_w * tf_idf_w / (
-            query_description_length_for_abstract * abstract_doc_length_table[doc_id]) * ZONE_WEIGHT_SAME
+            score[doc_id] += d_tf_w * tf_idf_w / (query_description_length_for_abstract * abstract_doc_length_table[doc_id]) * ZONE_WEIGHT_SAME
             description_to_abstracts_matched_ids.add(doc_id)
 
     # between tilte description and docs' title
@@ -198,8 +209,7 @@ def perform_search(query_title, query_description, title_dictionary, abstract_di
                 continue
             if doc_id not in score:
                 score[doc_id] = 0
-            score[doc_id] += d_tf_w * tf_idf_w / (
-            query_description_length_for_title * title_doc_length_table[doc_id]) * ZONE_WEIGHT_CROSS
+            score[doc_id] += d_tf_w * tf_idf_w / (query_description_length_for_title * title_doc_length_table[doc_id]) * ZONE_WEIGHT_CROSS
 
     return score
 
@@ -218,10 +228,6 @@ search(dict<str:int>, file, str) -> str
 
 
 def search_query(title_dictionary, abstract_dictionary, postings_reader, query_file):
-    """
-
-    :rtype : dictionary of doc id to query
-    """
     query = ET.parse(query_file).getroot()
     query_title = query.find('title').text
     query_description = query.find('description').text.strip()
@@ -237,6 +243,8 @@ def search_query(title_dictionary, abstract_dictionary, postings_reader, query_f
     doc_id_map = load_postings_by_term("DOC ID MAP", title_dictionary, postings_reader)
     directory = title_dictionary["DIRECTORY_PATH"]
 
+    # expand the query by using the top TOP_N_RESULT as another n queries
+    # added up their resulting scores
     for num in range(0, TOP_N_RESULT):
         if num >= len(result):
             break
