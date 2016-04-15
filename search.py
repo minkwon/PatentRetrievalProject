@@ -51,7 +51,7 @@ def tokenize_query(raw_query):
     tokenized_query = {}
     stemmer = nltk.stem.porter.PorterStemmer()
 
-    ''' # for nouns only synonyms
+    '''
     The approach with this commented code yields a lower score however we thought
     it is still interesting enough to keep the algorithm commented within the code.
 
@@ -93,7 +93,11 @@ def tokenize_query(raw_query):
             tokenized_query[term] = 1
     return tokenized_query
 
+"""
+Returns the length of a given document vector
 
+vector_length([(str, float), ...]) -> float
+"""
 def vector_length(vector):
     temp = 0
     for term, tf_idf_w in vector:
@@ -215,8 +219,6 @@ lnc.ltc in SMART notation.
 
 search(dict<str:int>, file, str) -> str
 """
-
-
 def search_query(title_dictionary, abstract_dictionary, postings_reader, query_file):
     """
 

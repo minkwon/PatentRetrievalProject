@@ -29,16 +29,31 @@ def generate_doc_length_table(hash_index):
 """
 Indexing is done in following order:
 
-1. Read the documents in directory_file in numerical order
-2. Tokenize the words
-3. Sort by terms and by doc id
-4. Build postings list where each element in postings list is (doc ID, term frequency) pair
-5. Converting term frequency to weighted term frequency
-6. Calculate each document's document length and map it in the dictionary <doc ID : document length>
-7. Construct dictionary while saving the postings on disk
+1. Read the documents in directory_file in lexicographical order
+
+2. Assign enumerated id to documents
+
+3. Tokenize the terms: case folding, removing stopwords, stemming and store it in one of the two lists,
+    one for title and one for abstract whilst keeping a record of document to IPC Group ID mapping
+
+4. Sort the two lists by terms, then doc id between the same terms
+
+5. Count the occurrence of the same term in the same section of a docment and build postings list where each
+    element in postings list is (doc ID, term frequency) pair
+
+6. Converting term frequency to weighted term frequency for both lists title and abstract
+
+7. Calculate each document's document length and map it in the dictionary <doc ID : document length>
+    for both lists
+
+8. Construct two dictionary while saving the postings on disk
     and record the byte offset in the dictionary to be used as a pointer to the matching postings
-8. Include a special key "DOC LENGTH TABLE" and map it with the document length dictionary
-9. Save the dictionary on disk
+    in one postings file where title's postings lists are saved first before the abstract's postings list
+
+9. Include special keys for doc length tables in the dictionary, IPC Group dictionary,
+    doc id map, and directory path
+
+10. Save the dictionaries on disk
 
 Processing the documents in doc id order helps because the order by doc id is
 preserved even after sorting the index by terms as sort() is guaranteed to be
@@ -46,7 +61,6 @@ stable since Python 2.2
 
 index_documents(str, str, str) -> None
 """
-# TODO need to rewrite this
 def index_documents(directory_file, dictionary_file, postings_file):
     title_hash_index = {}
     abstract_hash_index = {}
@@ -196,7 +210,6 @@ def index_documents(directory_file, dictionary_file, postings_file):
     dictionary_writer = open(dictionary_file, "w")
     pickle.dump((title_dictionary, abstract_dictionary), dictionary_writer)
     dictionary_writer.close()
-
 
 def usage():
     print "usage: python index.py -i directory-of-documents -d dictionary-file -p postings-file"
