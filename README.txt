@@ -48,6 +48,32 @@ Pruning threshold
 -----------------
 If a score falls below the threshold, remove the document as a possible result
 
+-------------------------------------------------------------------------------------------------
+
+Work allocations
+----------------
+
+A0148916U - Min Kwon
+--------------------
+Base Code from HW3
+Document ID enummeration
+XML processing
+Stop words removal
+Documentation
+
+A0133920N - Liu Yang
+--------------------
+Zone weighting
+Document Query based on top-N result
+Pruning threshold
+Documentation
+
+A0125495Y - Gan Wen Jie, Adam
+-----------------------------
+Top-N group multipliers
+Synonyms for noun query words (query expansion)
+Documentation
+
 
 == Files included with this submission ==
 
