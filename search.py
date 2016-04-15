@@ -12,6 +12,7 @@ ZONE_WEIGHT_SAME = 0.7
 ZONE_WEIGHT_CROSS = 0.3
 TOP_N_GROUP = 4
 INCREMENT_MULTIPLIER = 0.8
+TOP_N_RESULT = 2
 
 """
 Loads the postings file by byte pointer linked with the given term in dictionary
@@ -62,6 +63,11 @@ def tokenize_query(raw_query):
 	'''
 	
     for word in nltk.word_tokenize(raw_query):
+        # Ignoring any word that contains non-ascii characters
+        try:
+            word.decode('ascii')
+        except UnicodeEncodeError:
+            continue
         temp.append(str(stemmer.stem(word.lower())))
     temp.sort()
     for term in temp:
@@ -211,6 +217,32 @@ def search_query(title_dictionary, abstract_dictionary, postings_reader, query_f
     result = score.items()
     result.sort(key=lambda docId_score_pair: docId_score_pair[1], reverse=True)
 
+    doc_id_map = load_postings_by_term("DOC ID MAP", title_dictionary, postings_reader)
+    directory = title_dictionary["DIRECTORY_PATH"]
+
+    for num in range(0, TOP_N_RESULT):
+        if num >= len(result):
+            break
+        else:
+            content = ET.parse(directory + doc_id_map[result[num][0]] + ".xml").getroot()
+            title = abstract = None
+            for child in content:
+                name = child.get("name")
+                if name == "Title":
+                    title = child.text
+                elif name == "Abstract":
+                    abstract = child.text
+        score_for_new_query = perform_search(title, abstract, title_dictionary, abstract_dictionary, postings_reader)
+        for doc_id in score_for_new_query:
+            if doc_id in score:
+                score[doc_id] += score_for_new_query[doc_id]
+            else:
+                score[doc_id] = score_for_new_query[doc_id]
+
+    # sorting by score from most to the least
+    result = score.items()
+    result.sort(key=lambda docId_score_pair: docId_score_pair[1], reverse=True)
+
     # top N category score multiplier
     IPC_group_dictionary = load_postings_by_term("IPC GROUP DICTIONARY", title_dictionary, postings_reader)
     target_id_multiplier = {}
@@ -252,7 +284,6 @@ def search_query(title_dictionary, abstract_dictionary, postings_reader, query_f
     multiplied_results.sort(key=lambda docId_score_pair: docId_score_pair[1], reverse=True)
 
     resultString = ""
-    doc_id_map = load_postings_by_term("DOC ID MAP", title_dictionary, postings_reader)
 
     for doc_id, score in multiplied_results:
         resultString += doc_id_map[doc_id] + " "

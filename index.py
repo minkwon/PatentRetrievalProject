@@ -188,6 +188,8 @@ def index_documents(directory_file, dictionary_file, postings_file):
     # IPC group dictionary
     title_dictionary["IPC GROUP DICTIONARY"] = (len(IPC_group_dictionary), postings_writer.tell())
     pickle.dump(IPC_group_dictionary, postings_writer)
+    # STORE PATH OF CORPUS
+    title_dictionary["DIRECTORY_PATH"] = directory_file
     postings_writer.close()
 
     # saving dictionary file on-disk
