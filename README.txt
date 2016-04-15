@@ -17,7 +17,7 @@ d = document
 
 Same zone matches are given higher weight than cross-zone matches
 
-Current: 0.6 for same zone, 0.4 for cross zone
+Current: 0.7 for same zone, 0.3 for cross zone
 
 <T,q> -> <T,d> gives higher score than <T,q> -> <A,d>
 
@@ -33,10 +33,19 @@ Top-N group multipliers
 based on tf-idf + zone weighting, scores are sorted.
 Thereafter, the top N groups are chosen and given multipliers
 
-Current: Top 2 groups, 0.1 multiplier
+Current: Top 4 groups, 0.8 multiplier
+1st group = 4.2x, 2nd group = 3.4x, 3rd group = 2.6x, 4th group = 1.8x
 
-1st group = 1.2x, 2nd group = 1.1x
 
+Tested but removed feature:
+
+Synonyms for noun words (query expansion)
+-----------------------------------------
+If the query word is a noun, find the synonyms and add as query
+
+Synonyms for noun words (query expansion)
+-----------------------------------------
+If the query word is a noun, find the synonyms and add as query
 
 
 == Files included with this submission ==
@@ -65,3 +74,11 @@ I suggest that I should be graded as follows:
 As fairly as anybody in the class who have put in the work individually with honesty.
 
 == References ==
+nltk wordnet
+http://www.nltk.org/howto/wordnet.html
+
+nltk pos_tag
+http://stackoverflow.com/questions/17669952/finding-proper-nouns-using-nltk-wordnet
+http://stackoverflow.com/questions/15388831/what-are-all-possible-pos-tags-of-nltk
+http://stackoverflow.com/questions/35861482/nltk-lookup-error
+http://troublevn.com/265142/nltk-pos-tagging-not-working
