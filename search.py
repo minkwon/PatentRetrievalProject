@@ -16,7 +16,17 @@ TOP_N_RESULT = 2
 PRUNE_THRESHOLD = 14
 
 """
-Loads the postings file by byte pointer linked with the given term in dictionary
+Loads the postings file by byte pointer linked with the given term in dictionary.
+The returned objects either are regular postings lists with a list of doc_id, weighted tf pairs,
+or special entries that contains different objects which are:
+
+{
+"TITLE DOC LENGTH TABLE" : dict<int:float>, a dictionary mapping document id and document length for title
+"ABSTRACT DOC LENGTH TABLE" : dict<int:float>, a dictionary mapping document id and document length for abstract
+"DOC ID MAP" : dict<int, str>, a dictionary that maps enumerated doc id to the actual doc id
+"IPC GROUP DICTIONARY" : dict<int:str> a dictionary that maps enumerated doc id to IPC Group ID
+"DIRECTORY_PATH" : str, directory path of corpus
+}
 
 Pre-condition: term in dictionary == True
 
@@ -33,6 +43,7 @@ def load_postings_by_term(term, dictionary, postings_reader):
 Given raw query is tokenized and each term's frequency is calculated.
 Returns a dictionary that maps each term with its term frequency.
 The tokenization involves case-folding and stemming with PorterStemmer object.
+Any words that contains non-ascii chars are ignored.
 
 tokenize_query -> dict<term:term frequency, ...>
 """
@@ -44,8 +55,16 @@ def tokenize_query(raw_query):
     tokenized_query = {}
     stemmer = nltk.stem.porter.PorterStemmer()
 	
-	''' # for nouns only synonyms (negative impact)
-	#tag what type of word it is and check for nouns later
++    ''' # for nouns only synonyms
+    The approach with this commented code yields a lower score however we thought
+    it is still interesting enough to keep the algorithm commented within the code.
+    
+	This is making use of synonym to do a query expansion provided in NLTK Synset.
+    We specifically pick the nouns in synsets because we believe that nouns will
+    help us guess the most relevant meanings for a patent information verbs or
+    adjectives do.
+	
+ 	#tag what type of word it is and check for nouns later
 	tagged_query = pos_tag(nltk.word_tokenize(raw_query))
 	
 	for word, pos in tagged_query:
@@ -292,8 +311,10 @@ def search_query(title_dictionary, abstract_dictionary, postings_reader, query_f
 	
 	#generate result string
     for doc_id, score in multiplied_results:
-		''' #pruning of results based on threshold score
-			#this also had a negative impact on the results as it greatly reduces recall
+		''' # pruning of results based on threshold score
+			# this also had a negative impact on the results as it greatly reduces recall
+			# and is therefore commented out
+		# since scores are sorted, if reaches below threshold, stop appending
 		if score < PRUNE_THRESHOLD:
             break
 		'''
