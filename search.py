@@ -46,58 +46,58 @@ Any words that contains non-ascii chars are ignored.
 tokenize_query -> dict<term:term frequency, ...>
 """
 def tokenize_query(raw_query):
-
-    temp = []
-    tokenized_query = {}
-    stemmer = nltk.stem.porter.PorterStemmer()
-
-    ''' # for nouns only synonyms
-    The approach with this commented code yields a lower score however we thought
-    it is still interesting enough to keep the algorithm commented within the code.
-
-    This is making use of synonym to do a query expansion provided in NLTK Synset.
-    We specifically pick the nouns in synsets because we believe that nouns will
-    help us guess the most relevant meanings for a patent information verbs or
-    adjectives do.
-
+	temp = []
+	tokenized_query = {}
+	stemmer = nltk.stem.porter.PorterStemmer()
+	
+	''' 
+	# for nouns only synonyms
+	The approach with this commented code yields a lower score however we thought
+	it is still interesting enough to keep the algorithm commented within the code.
+    
+	This is making use of synonym to do a query expansion provided in NLTK Synset.
+	We specifically pick the nouns in synsets because we believe that nouns will
+	help us guess the most relevant meanings for a patent information verbs or 
+	adjectives do.
+    
     #tag what type of word it is and check for nouns later
-    tagged_query = pos_tag(nltk.word_tokenize(raw_query))
-    tempList = []
+	tagged_query = pos_tag(nltk.word_tokenize(raw_query))
+	
+	for word, pos in tagged_query:
+		tempList = []
+		temp.append(str(stemmer.stem(word.lower())))
+		#check if word is a type of noun, if yes, find syn as query expansion
+		#for information on tags -> nltk.help.upenn_tagset()
+		if (pos == 'NN' or pos == 'NNP' or pos == 'NNS' or pos == 'NNPS'):
+			for synset in wn.synsets(word):
+				for lemma in synset.lemmas():
+					tempList.append(lemma)
+		tempList = list(set(tempList))
+		for syn in tempList:
+			temp.append(str(stemmer.stem(syn.name().lower())))
+	'''
+	
+	for word in nltk.word_tokenize(raw_query):
+		# Ignoring any word that contains non-ascii characters
+		try:
+			word.decode('ascii')
+		except UnicodeEncodeError:
+			continue
+		temp.append(str(stemmer.stem(word.lower())))
+	temp.sort()
+	for term in temp:
+		if term in tokenized_query:
+			tokenized_query[term] += 1
+		else:
+			tokenized_query[term] = 1
+	return tokenized_query
 
-    for word, pos in tagged_query:
-        temp.append(str(stemmer.stem(word.lower())))
-        #check if word is a type of noun, if yes, find syn as query expansion
-        #for information on tags -> nltk.help.upenn_tagset()
-        if (pos == 'NN' or pos == 'NNP' or pos == 'NNS' or pos == 'NNPS'):
-            for synset in wn.synsets(word):
-                for lemma in synset.lemmas():
-                    tempList.append(lemma)
-        tempList = list(set(tempList))
-        for syn in tempList:
-            temp.append(str(stemmer.stem(syn.name().lower())))
-        tempList = []
-    '''
+"""
+Returns the length of a given document vector
 
-    for word in nltk.word_tokenize(raw_query):
-        # Ignoring any word that contains non-ascii characters
-        try:
-            word.decode('ascii')
-        except UnicodeEncodeError:
-            continue
-        temp.append(str(stemmer.stem(word.lower())))
-    temp.sort()
-    for term in temp:
-        if term in tokenized_query:
-            tokenized_query[term] += 1
-        else:
-            tokenized_query[term] = 1
-    return tokenized_query
-
-
+vector_length([(str, float), ...]) -> float
+"""
 def vector_length(vector):
-    """
-    Compute the length of the vector
-    """
     temp = 0
     for term, tf_idf_w in vector:
         temp += pow(tf_idf_w, 2)
@@ -105,10 +105,6 @@ def vector_length(vector):
 
 
 def perform_search(query_title, query_description, title_dictionary, abstract_dictionary, postings_reader):
-    """
-    Processes a query with title and abstract
-    Return unsorted scores
-    """
     # If title is missing, return empty string
     if query_title.strip() == '':
         return ''
@@ -116,17 +112,10 @@ def perform_search(query_title, query_description, title_dictionary, abstract_di
     if query_description.strip() == '':
         query_description = None
     score = {}
-
-    # zone weight
-
-    # use four tables to store the scores for title-title, title-abstract, description-title,
-    # description-abstract matchs
     query_title_weighted_tf_idf_table_for_title = {}
     query_title_weighted_tf_idf_table_for_abstract = {}
     query_description_weighted_tf_idf_table_for_title = {}
     query_description_weighted_tf_idf_table_for_abstract = {}
-
-    # read documents' part lengths
     title_doc_length_table = load_postings_by_term("TITLE DOC LENGTH TABLE", title_dictionary, postings_reader)
     abstract_doc_length_table = load_postings_by_term("ABSTRACT DOC LENGTH TABLE", abstract_dictionary, postings_reader)
 
@@ -175,7 +164,8 @@ def perform_search(query_title, query_description, title_dictionary, abstract_di
         for doc_id, d_tf_w in title_postings:
             if doc_id not in score:
                 score[doc_id] = 0
-            score[doc_id] += d_tf_w * tf_idf_w / (query_title_length_for_title * title_doc_length_table[doc_id]) * ZONE_WEIGHT_SAME
+            score[doc_id] += d_tf_w * tf_idf_w / (
+            query_title_length_for_title * title_doc_length_table[doc_id]) * ZONE_WEIGHT_SAME
             title_to_title_matched_ids.add(doc_id)
 
     # between tilte query and docs' abstracts
@@ -187,7 +177,8 @@ def perform_search(query_title, query_description, title_dictionary, abstract_di
                 continue
             if doc_id not in score:
                 score[doc_id] = 0
-            score[doc_id] += d_tf_w * tf_idf_w / (query_title_length_for_abstract * abstract_doc_length_table[doc_id]) * ZONE_WEIGHT_CROSS
+            score[doc_id] += d_tf_w * tf_idf_w / (
+            query_title_length_for_abstract * abstract_doc_length_table[doc_id]) * ZONE_WEIGHT_CROSS
 
     # between tilte description and docs' abstracts
     description_to_abstracts_matched_ids = set()
@@ -197,7 +188,8 @@ def perform_search(query_title, query_description, title_dictionary, abstract_di
         for doc_id, d_tf_w in abstract_postings:
             if doc_id not in score:
                 score[doc_id] = 0
-            score[doc_id] += d_tf_w * tf_idf_w / (query_description_length_for_abstract * abstract_doc_length_table[doc_id]) * ZONE_WEIGHT_SAME
+            score[doc_id] += d_tf_w * tf_idf_w / (
+            query_description_length_for_abstract * abstract_doc_length_table[doc_id]) * ZONE_WEIGHT_SAME
             description_to_abstracts_matched_ids.add(doc_id)
 
     # between tilte description and docs' title
@@ -209,7 +201,8 @@ def perform_search(query_title, query_description, title_dictionary, abstract_di
                 continue
             if doc_id not in score:
                 score[doc_id] = 0
-            score[doc_id] += d_tf_w * tf_idf_w / (query_description_length_for_title * title_doc_length_table[doc_id]) * ZONE_WEIGHT_CROSS
+            score[doc_id] += d_tf_w * tf_idf_w / (
+            query_description_length_for_title * title_doc_length_table[doc_id]) * ZONE_WEIGHT_CROSS
 
     return score
 
@@ -225,9 +218,11 @@ lnc.ltc in SMART notation.
 
 search(dict<str:int>, file, str) -> str
 """
-
-
 def search_query(title_dictionary, abstract_dictionary, postings_reader, query_file):
+    """
+
+    :rtype : dictionary of doc id to query
+    """
     query = ET.parse(query_file).getroot()
     query_title = query.find('title').text
     query_description = query.find('description').text.strip()
@@ -243,8 +238,6 @@ def search_query(title_dictionary, abstract_dictionary, postings_reader, query_f
     doc_id_map = load_postings_by_term("DOC ID MAP", title_dictionary, postings_reader)
     directory = title_dictionary["DIRECTORY_PATH"]
 
-    # expand the query by using the top TOP_N_RESULT as another n queries
-    # added up their resulting scores
     for num in range(0, TOP_N_RESULT):
         if num >= len(result):
             break
@@ -268,30 +261,37 @@ def search_query(title_dictionary, abstract_dictionary, postings_reader, query_f
     result = score.items()
     result.sort(key=lambda docId_score_pair: docId_score_pair[1], reverse=True)
 
-    # top N category score multiplier
+    
+	
+	# Magnifying top N groups with a multiplier
+	# This approach is using the assumption that if another patent belonging to 
+	# the same group as the current top N results, it should also mean that it is 
+	# more likely to be relevant than others not within the same group
+	
+	# top N category score multiplier
     IPC_group_dictionary = load_postings_by_term("IPC GROUP DICTIONARY", title_dictionary, postings_reader)
-    target_id_multiplier = {}
+    target_id_multiplier = {}	#contains {group:multiplier to be applied}
     multiplied_results = []
     counter = 0
-
+	
     for num in range(TOP_N_GROUP, 0, -1):
-
-        # check if there are enough category in results to fit N groups
+        # check if there are any more items to fit N groups
         if counter >= len(result):
             break
         else:
-            # resolve group
+            # resolve group of this top N ranked item
             target_doc_id = result[counter][0]
             counter += 1
             target_group = IPC_group_dictionary[target_doc_id]
 
-            # check if group is recorded
+            # check if group was already recorded before
             if target_group not in target_id_multiplier:
                 target_id_multiplier[target_group] = 1 + (num * INCREMENT_MULTIPLIER)
             else:
+				#repeated group, skip
                 num += 1
 
-        # apply multipliers to scores of results with matching category
+    # apply corresponding multipliers to scores of matching group
     for doc_id, score in result:
         temp_list = []
         if IPC_group_dictionary[doc_id] in target_id_multiplier:
@@ -303,18 +303,21 @@ def search_query(title_dictionary, abstract_dictionary, postings_reader, query_f
             temp_list.append(score)
             multiplied_results.append(temp_list)
 
-            # TODO: MUST RETURN NULL IF NO PATENTS ARE RELEVANT
-
-        # sort again after adjusting scores
+    # sort again after adjusting scores
     multiplied_results.sort(key=lambda docId_score_pair: docId_score_pair[1], reverse=True)
 
     resultString = ""
-
+	
+	#generate result string
     for doc_id, score in multiplied_results:
-        # if score < PRUNE_THRESHOLD:
-        #     break
-        resultString += doc_id_map[doc_id] + " "
-
+		''' # pruning of results based on threshold score
+			# this also had a negative impact on the results as it greatly reduces recall
+			# and is therefore commented out
+		# since scores are sorted, if reaches below threshold, stop appending
+		if score < PRUNE_THRESHOLD:
+            break
+		'''
+		resultString += doc_id_map[doc_id] + " "
     return resultString[:-1]
 
 

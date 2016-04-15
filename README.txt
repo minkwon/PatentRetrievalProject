@@ -8,6 +8,11 @@ sufficient.
 
 Feature:
 
+Document ID enummeration
+------------------------
+Document's enumumerated id is indexed instead of its actual doc id to
+be compatible with the implementations in search.py
+
 Zone weighting
 --------------
 T = title
@@ -16,36 +21,58 @@ q = query
 d = document
 
 Same zone matches are given higher weight than cross-zone matches
-
 Current: 0.7 for same zone, 0.3 for cross zone
-
 <T,q> -> <T,d> gives higher score than <T,q> -> <A,d>
 
-<A,q> -> <T,d> ??? <A,q> -> <A,d>
-
-Document ID enummeration
-------------------------
-Document's enumumerated id is indexed instead of its actual doc id to
-be compatible with the implementations in search.py
+Document Query based on top-N result
+------------------------------------
+Based on the score of tf-idf with zone weighting, ultilize the top N result as a query
 
 Top-N group multipliers
 -----------------------
-based on tf-idf + zone weighting, scores are sorted.
-Thereafter, the top N groups are chosen and given multipliers
+based on tf-idf with zone weighting, of both query and top-N result, scores are sorted.
+Thereafter, the top-N groups are chosen and given multipliers.
+Multipliers are then applied to the result set and sorted for the last time.
 
 Current: Top 4 groups, 0.8 multiplier
 1st group = 4.2x, 2nd group = 3.4x, 3rd group = 2.6x, 4th group = 1.8x
 
 
-Tested but removed feature:
+Tested but removed features (codes are commented out):
 
-Synonyms for noun words (query expansion)
+Synonyms for noun query words (query expansion)
 -----------------------------------------
-If the query word is a noun, find the synonyms and add as query
+If the query word is a noun, find the synonyms of it and add them as part of the query expansion
 
-Synonyms for noun words (query expansion)
------------------------------------------
-If the query word is a noun, find the synonyms and add as query
+Pruning threshold
+-----------------
+If a score falls below the threshold, remove the document as a possible result
+
+-------------------------------------------------------------------------------------------------
+
+Work allocations
+----------------
+
+A0148916U - Min Kwon
+--------------------
+Base Code from HW3
+Document ID enummeration
+XML processing
+Stop words removal
+Documentation
+
+A0133920N - Liu Yang
+--------------------
+Zone weighting
+Document Query based on top-N result
+Pruning threshold
+Documentation
+
+A0125495Y - Gan Wen Jie, Adam
+-----------------------------
+Top-N group multipliers
+Synonyms for noun query words (query expansion)
+Documentation
 
 
 == Files included with this submission ==
