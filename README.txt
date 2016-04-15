@@ -74,6 +74,10 @@ Top-N group multipliers
 Synonyms for noun query words (query expansion)
 Documentation
 
+A0105508M - Xu Gelin
+--------------------
+Code review and bug fixes
+Documentation
 
 == Files included with this submission ==
 
