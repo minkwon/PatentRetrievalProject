@@ -11,6 +11,7 @@ ZONE_WEIGHT_CROSS = 0.3
 TOP_N_GROUP = 4
 INCREMENT_MULTIPLIER = 0.8
 TOP_N_RESULT = 2
+PRUNE_THRESHOLD = 1
 
 """
 Loads the postings file by byte pointer linked with the given term in dictionary
@@ -264,6 +265,8 @@ def search_query(title_dictionary, abstract_dictionary, postings_reader, query_f
     resultString = ""
 
     for doc_id, score in multiplied_results:
+        if score < PRUNE_THRESHOLD:
+            break
         resultString += doc_id_map[doc_id] + " "
 
     return resultString[:-1]
