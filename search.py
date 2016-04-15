@@ -15,14 +15,22 @@ INCREMENT_MULTIPLIER = 0.8
 TOP_N_RESULT = 2
 
 """
-Loads the postings file by byte pointer linked with the given term in dictionary
+Loads the postings file by byte pointer linked with the given term in dictionary.
+The returned objects either are regular postings lists with a list of doc_id, weighted tf pairs,
+or special entries that contains different objects which are:
+
+{
+"TITLE DOC LENGTH TABLE" : dict<int:float>, a dictionary mapping document id and document length for title
+"ABSTRACT DOC LENGTH TABLE" : dict<int:float>, a dictionary mapping document id and document length for abstract
+"DOC ID MAP" : dict<int, str>, a dictionary that maps enumerated doc id to the actual doc id
+"IPC GROUP DICTIONARY" : dict<int:str> a dictionary that maps enumerated doc id to IPC Group ID
+"DIRECTORY_PATH" : str, directory path of corpus
+}
 
 Pre-condition: term in dictionary == True
 
 get_postings_list_by_term(str, dict<str:int>, file) -> [(int, float), ...]
 """
-
-
 def load_postings_by_term(term, dictionary, postings_reader):
     postings_reader.seek(dictionary[term][1])
     return pickle.load(postings_reader)
@@ -32,18 +40,25 @@ def load_postings_by_term(term, dictionary, postings_reader):
 Given raw query is tokenized and each term's frequency is calculated.
 Returns a dictionary that maps each term with its term frequency.
 The tokenization involves case-folding and stemming with PorterStemmer object.
+Any words that contains non-ascii chars are ignored.
 
 tokenize_query -> dict<term:term frequency, ...>
 """
-
-
 def tokenize_query(raw_query):
 
     temp = []
     tokenized_query = {}
     stemmer = nltk.stem.porter.PorterStemmer()
 
-    ''' # for nouns only synonyms (negative impact)
+    ''' # for nouns only synonyms
+    The approach with this commented code yields a lower score however we thought
+    it is still interesting enough to keep the algorithm commented within the code.
+
+    This is making use of synonym to do a query expansion provided in NLTK Synset.
+    We specifically pick the nouns in synsets because we believe that nouns will
+    help us guess the most relevant meanings for a patent information verbs or
+    adjectives do.
+
     #tag what type of word it is and check for nouns later
     tagged_query = pos_tag(nltk.word_tokenize(raw_query))
     tempList = []
@@ -76,6 +91,7 @@ def tokenize_query(raw_query):
         else:
             tokenized_query[term] = 1
     return tokenized_query
+
 
 def vector_length(vector):
     temp = 0
