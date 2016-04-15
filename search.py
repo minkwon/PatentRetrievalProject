@@ -103,7 +103,10 @@ def vector_length(vector):
         temp += pow(tf_idf_w, 2)
     return pow(temp, 1 / 2)
 
-
+"""
+Processes a query with title and abstract
+Return unsorted scores
+"""
 def perform_search(query_title, query_description, title_dictionary, abstract_dictionary, postings_reader):
     # If title is missing, return empty string
     if query_title.strip() == '':
@@ -112,10 +115,16 @@ def perform_search(query_title, query_description, title_dictionary, abstract_di
     if query_description.strip() == '':
         query_description = None
     score = {}
+	
+	# zone weight	
+    # use four tables to store the scores for title-title, title-abstract, description-title,
+    # description-abstract matchs
     query_title_weighted_tf_idf_table_for_title = {}
     query_title_weighted_tf_idf_table_for_abstract = {}
     query_description_weighted_tf_idf_table_for_title = {}
     query_description_weighted_tf_idf_table_for_abstract = {}
+	
+	# read documents' part lengths
     title_doc_length_table = load_postings_by_term("TITLE DOC LENGTH TABLE", title_dictionary, postings_reader)
     abstract_doc_length_table = load_postings_by_term("ABSTRACT DOC LENGTH TABLE", abstract_dictionary, postings_reader)
 
@@ -164,8 +173,7 @@ def perform_search(query_title, query_description, title_dictionary, abstract_di
         for doc_id, d_tf_w in title_postings:
             if doc_id not in score:
                 score[doc_id] = 0
-            score[doc_id] += d_tf_w * tf_idf_w / (
-            query_title_length_for_title * title_doc_length_table[doc_id]) * ZONE_WEIGHT_SAME
+            score[doc_id] += d_tf_w * tf_idf_w / (query_title_length_for_title * title_doc_length_table[doc_id]) * ZONE_WEIGHT_SAME
             title_to_title_matched_ids.add(doc_id)
 
     # between tilte query and docs' abstracts
@@ -177,8 +185,7 @@ def perform_search(query_title, query_description, title_dictionary, abstract_di
                 continue
             if doc_id not in score:
                 score[doc_id] = 0
-            score[doc_id] += d_tf_w * tf_idf_w / (
-            query_title_length_for_abstract * abstract_doc_length_table[doc_id]) * ZONE_WEIGHT_CROSS
+            score[doc_id] += d_tf_w * tf_idf_w / (query_title_length_for_abstract * abstract_doc_length_table[doc_id]) * ZONE_WEIGHT_CROSS
 
     # between tilte description and docs' abstracts
     description_to_abstracts_matched_ids = set()
@@ -188,8 +195,7 @@ def perform_search(query_title, query_description, title_dictionary, abstract_di
         for doc_id, d_tf_w in abstract_postings:
             if doc_id not in score:
                 score[doc_id] = 0
-            score[doc_id] += d_tf_w * tf_idf_w / (
-            query_description_length_for_abstract * abstract_doc_length_table[doc_id]) * ZONE_WEIGHT_SAME
+            score[doc_id] += d_tf_w * tf_idf_w / (query_description_length_for_abstract * abstract_doc_length_table[doc_id]) * ZONE_WEIGHT_SAME
             description_to_abstracts_matched_ids.add(doc_id)
 
     # between tilte description and docs' title
@@ -201,11 +207,20 @@ def perform_search(query_title, query_description, title_dictionary, abstract_di
                 continue
             if doc_id not in score:
                 score[doc_id] = 0
-            score[doc_id] += d_tf_w * tf_idf_w / (
-            query_description_length_for_title * title_doc_length_table[doc_id]) * ZONE_WEIGHT_CROSS
+            score[doc_id] += d_tf_w * tf_idf_w / (query_description_length_for_title * title_doc_length_table[doc_id]) * ZONE_WEIGHT_CROSS
 
     return score
 
+"""
+Given an xml query file, the title and description are extracted.
+Parameters are sent to perform_search() to obtain scores.
+Based on the above results, the top-N documents are read and used as a query.
+Scores from both are then consolidated and sorted.
+
+Based on this new score, top-N groups are identified and given a multiplier
+This multiplier is then applied to the scores of all documents that belongs to the top-N groups
+The scores is sorted for the last time after multipliers and output string is returned
+"""
 def search_query(title_dictionary, abstract_dictionary, postings_reader, query_file):
     """
 
@@ -226,6 +241,8 @@ def search_query(title_dictionary, abstract_dictionary, postings_reader, query_f
     doc_id_map = load_postings_by_term("DOC ID MAP", title_dictionary, postings_reader)
     directory = title_dictionary["DIRECTORY_PATH"]
 
+	# expand the query by using the top TOP_N_RESULT as another n queries
+    # added up their resulting scores
     for num in range(0, TOP_N_RESULT):
         if num >= len(result):
             break
