@@ -51,20 +51,21 @@ tokenize_query -> dict<term:term frequency, ...>
 
 def tokenize_query(raw_query):
 
-    temp = []
-    tokenized_query = {}
-    stemmer = nltk.stem.porter.PorterStemmer()
+	temp = []
+	tokenized_query = {}
+	stemmer = nltk.stem.porter.PorterStemmer()
 	
-+    ''' # for nouns only synonyms
-    The approach with this commented code yields a lower score however we thought
-    it is still interesting enough to keep the algorithm commented within the code.
+	''' 
+	# for nouns only synonyms
+	The approach with this commented code yields a lower score however we thought
+	it is still interesting enough to keep the algorithm commented within the code.
     
 	This is making use of synonym to do a query expansion provided in NLTK Synset.
-    We specifically pick the nouns in synsets because we believe that nouns will
-    help us guess the most relevant meanings for a patent information verbs or
-    adjectives do.
-	
- 	#tag what type of word it is and check for nouns later
+	We specifically pick the nouns in synsets because we believe that nouns will
+	help us guess the most relevant meanings for a patent information verbs or 
+	adjectives do.
+    
+    #tag what type of word it is and check for nouns later
 	tagged_query = pos_tag(nltk.word_tokenize(raw_query))
 	
 	for word, pos in tagged_query:
@@ -81,20 +82,20 @@ def tokenize_query(raw_query):
 			temp.append(str(stemmer.stem(syn.name().lower())))
 	'''
 	
-    for word in nltk.word_tokenize(raw_query):
-        # Ignoring any word that contains non-ascii characters
-        try:
-            word.decode('ascii')
-        except UnicodeEncodeError:
-            continue
-        temp.append(str(stemmer.stem(word.lower())))
-    temp.sort()
-    for term in temp:
-        if term in tokenized_query:
-            tokenized_query[term] += 1
-        else:
-            tokenized_query[term] = 1
-    return tokenized_query
+	for word in nltk.word_tokenize(raw_query):
+		# Ignoring any word that contains non-ascii characters
+		try:
+			word.decode('ascii')
+		except UnicodeEncodeError:
+			continue
+		temp.append(str(stemmer.stem(word.lower())))
+	temp.sort()
+	for term in temp:
+		if term in tokenized_query:
+			tokenized_query[term] += 1
+		else:
+			tokenized_query[term] = 1
+	return tokenized_query
 
 def vector_length(vector):
     temp = 0
@@ -318,7 +319,7 @@ def search_query(title_dictionary, abstract_dictionary, postings_reader, query_f
 		if score < PRUNE_THRESHOLD:
             break
 		'''
-        resultString += doc_id_map[doc_id] + " "
+		resultString += doc_id_map[doc_id] + " "
 
     return resultString[:-1]
 
