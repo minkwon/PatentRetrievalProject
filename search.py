@@ -264,24 +264,9 @@ def search_query(title_dictionary, abstract_dictionary, postings_reader, query_f
 
     resultString = ""
 
-    # positive_f = open("queries/q2-qrels+ve.txt")
-    # positive = set()
-    # for line in positive_f:
-    #     positive.add(line.strip())
-    #
-    # negative_f = open("queries/q2-qrels-ve.txt")
-    # negative = set()
-    # for line in negative_f:
-    #     negative.add(line.strip())
-
     for doc_id, score in multiplied_results:
-        if score < PRUNE_THRESHOLD:
-            # print(score)
-            break
-        # if doc_id_map[doc_id] in positive:
-        #     print("positive: " + str(score))
-        # elif doc_id_map[doc_id] in negative:
-        #     print("negative: " + str(score))
+        # if score < PRUNE_THRESHOLD:
+        #     break
         resultString += doc_id_map[doc_id] + " "
 
     return resultString[:-1]
