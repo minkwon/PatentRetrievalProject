@@ -46,9 +46,9 @@ def tokenize_query(raw_query):
 	''' # for nouns only synonyms (negative impact)
 	#tag what type of word it is and check for nouns later
 	tagged_query = pos_tag(nltk.word_tokenize(raw_query))
-	tempList = []
-		
+	
 	for word, pos in tagged_query:
+		tempList = []
 		temp.append(str(stemmer.stem(word.lower())))
 		#check if word is a type of noun, if yes, find syn as query expansion
 		#for information on tags -> nltk.help.upenn_tagset()
@@ -59,7 +59,6 @@ def tokenize_query(raw_query):
 		tempList = list(set(tempList))
 		for syn in tempList:
 			temp.append(str(stemmer.stem(syn.name().lower())))
-		tempList = []
 	'''
 	
     for word in nltk.word_tokenize(raw_query):
@@ -243,30 +242,37 @@ def search_query(title_dictionary, abstract_dictionary, postings_reader, query_f
     result = score.items()
     result.sort(key=lambda docId_score_pair: docId_score_pair[1], reverse=True)
 
-    # top N category score multiplier
+    
+	
+	# Magnifying top N groups with a multiplier
+	# This approach is using the assumption that if another patent belonging to 
+	# the same group as the current top N results, it should also mean that it is 
+	# more likely to be relevant than others not within the same group
+	
+	# top N category score multiplier
     IPC_group_dictionary = load_postings_by_term("IPC GROUP DICTIONARY", title_dictionary, postings_reader)
-    target_id_multiplier = {}
+    target_id_multiplier = {}	#contains {group:multiplier to be applied}
     multiplied_results = []
     counter = 0
-
+	
     for num in range(TOP_N_GROUP, 0, -1):
-
-        # check if there are enough category in results to fit N groups
+        # check if there are any more items to fit N groups
         if counter >= len(result):
             break
         else:
-            # resolve group
+            # resolve group of this top N ranked item
             target_doc_id = result[counter][0]
             counter += 1
             target_group = IPC_group_dictionary[target_doc_id]
 
-            # check if group is recorded
+            # check if group was already recorded before
             if target_group not in target_id_multiplier:
                 target_id_multiplier[target_group] = 1 + (num * INCREMENT_MULTIPLIER)
             else:
+				#repeated group, skip
                 num += 1
 
-        # apply multipliers to scores of results with matching category
+    # apply corresponding multipliers to scores of matching group
     for doc_id, score in result:
         temp_list = []
         if IPC_group_dictionary[doc_id] in target_id_multiplier:
@@ -278,13 +284,12 @@ def search_query(title_dictionary, abstract_dictionary, postings_reader, query_f
             temp_list.append(score)
             multiplied_results.append(temp_list)
 
-            # TODO: MUST RETURN NULL IF NO PATENTS ARE RELEVANT
-
-        # sort again after adjusting scores
+    # sort again after adjusting scores
     multiplied_results.sort(key=lambda docId_score_pair: docId_score_pair[1], reverse=True)
 
     resultString = ""
-
+	
+	#generate result string
     for doc_id, score in multiplied_results:
         resultString += doc_id_map[doc_id] + " "
 
