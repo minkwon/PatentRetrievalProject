@@ -32,8 +32,6 @@ Pre-condition: term in dictionary == True
 
 get_postings_list_by_term(str, dict<str:int>, file) -> [(int, float), ...]
 """
-
-
 def load_postings_by_term(term, dictionary, postings_reader):
     postings_reader.seek(dictionary[term][1])
     return pickle.load(postings_reader)
@@ -47,10 +45,7 @@ Any words that contains non-ascii chars are ignored.
 
 tokenize_query -> dict<term:term frequency, ...>
 """
-
-
 def tokenize_query(raw_query):
-
 	temp = []
 	tokenized_query = {}
 	stemmer = nltk.stem.porter.PorterStemmer()
@@ -97,6 +92,11 @@ def tokenize_query(raw_query):
 			tokenized_query[term] = 1
 	return tokenized_query
 
+"""
+Returns the length of a given document vector
+
+vector_length([(str, float), ...]) -> float
+"""
 def vector_length(vector):
     temp = 0
     for term, tf_idf_w in vector:
@@ -218,8 +218,6 @@ lnc.ltc in SMART notation.
 
 search(dict<str:int>, file, str) -> str
 """
-
-
 def search_query(title_dictionary, abstract_dictionary, postings_reader, query_file):
     """
 
@@ -320,7 +318,6 @@ def search_query(title_dictionary, abstract_dictionary, postings_reader, query_f
             break
 		'''
 		resultString += doc_id_map[doc_id] + " "
-
     return resultString[:-1]
 
 
