@@ -26,7 +26,9 @@ Current: 0.7 for same zone, 0.3 for cross zone
 
 Document Query based on top-N result
 ------------------------------------
-Based on the score of tf-idf with zone weighting, ultilize the top N result as a query
+Based on the score of tf-idf with zone weighting, retrieve and ultilize the top N result as a query
+** this requires that the directory containing corpus used during indexing remains ** (Min has assured this)
+
 
 Top-N group multipliers
 -----------------------
