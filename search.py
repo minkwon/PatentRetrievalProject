@@ -4,6 +4,8 @@ import nltk
 import math
 import xml.etree.ElementTree as ET
 import cPickle as pickle
+from nltk.corpus import wordnet as wn
+from nltk.tag import pos_tag
 
 QUERY_DESCRIPTION_PREFIX = "Relevant documents will describe"
 ZONE_WEIGHT_SAME = 0.7
@@ -36,9 +38,30 @@ tokenize_query -> dict<term:term frequency, ...>
 
 
 def tokenize_query(raw_query):
+
     temp = []
     tokenized_query = {}
     stemmer = nltk.stem.porter.PorterStemmer()
+	
+	''' # for nouns only synonyms (negative impact)
+	#tag what type of word it is and check for nouns later
+	tagged_query = pos_tag(nltk.word_tokenize(raw_query))
+	tempList = []
+		
+	for word, pos in tagged_query:
+		temp.append(str(stemmer.stem(word.lower())))
+		#check if word is a type of noun, if yes, find syn as query expansion
+		#for information on tags -> nltk.help.upenn_tagset()
+		if (pos == 'NN' or pos == 'NNP' or pos == 'NNS' or pos == 'NNPS'):
+			for synset in wn.synsets(word):
+				for lemma in synset.lemmas():
+					tempList.append(lemma)
+		tempList = list(set(tempList))
+		for syn in tempList:
+			temp.append(str(stemmer.stem(syn.name().lower())))
+		tempList = []
+	'''
+	
     for word in nltk.word_tokenize(raw_query):
         # Ignoring any word that contains non-ascii characters
         try:
@@ -53,7 +76,6 @@ def tokenize_query(raw_query):
         else:
             tokenized_query[term] = 1
     return tokenized_query
-
 
 def vector_length(vector):
     temp = 0
