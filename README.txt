@@ -77,9 +77,11 @@ Documentation
 
 == Files included with this submission ==
 
-List the files in your submission here and provide a short 1 line
-description of each file.  Make sure your submission's files are named
-and formatted correctly.
+index.py - Indexes the corpus and generates postings file and dictionary file
+search.py - Searches through the index with the given query and produces output file
+teamname.txt - Simple text file that contains the teamname followed by 27 which denotes
+    that the version of python interpreter for the script should be 2.7x
+
 
 == Statement of individual work ==
 

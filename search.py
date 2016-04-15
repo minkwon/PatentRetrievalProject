@@ -206,18 +206,6 @@ def perform_search(query_title, query_description, title_dictionary, abstract_di
 
     return score
 
-
-"""
-Processes the raw string query and retrieves at most 10 documents by its ID for the query
-that are the most relevant to the query. The returned string is a space-delimitered doc IDs
-in the order of relevance from highest to the lowest.
-
-The relevance is determined by the accumulated score of each document's cosine similarity
-between its document vector and the query vector. The ranking scheme for the algorithm is
-lnc.ltc in SMART notation.
-
-search(dict<str:int>, file, str) -> str
-"""
 def search_query(title_dictionary, abstract_dictionary, postings_reader, query_file):
     """
 
